@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#B8956A">
+<title>くくたま</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="felt" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="3" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="3" seed="8" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0.29  0 0 0 0 0.23  0 0 0 0 0.2  0 0 0 0.6 -0.14" result="ga"/>
+      <feComposite in="ga" in2="d" operator="in" result="gm"/>
+      <feMerge><feMergeNode in="d"/><feMergeNode in="gm"/></feMerge>
+    </filter>
+  </defs>
+</svg>
+<div id="stage"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
