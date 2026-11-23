@@ -226,3 +226,24 @@ button:disabled{cursor:default}
 @media (prefers-reduced-motion:reduce){
   .breathe,.wiggle,.cord,.cloud,.go.idle,.eggbtn.sel::before{animation:none!important}
 }
+
+/* ---------- ずかん・たびだち（2026-11-23） ---------- */
+.zbtn{right:calc(var(--u)*104)}
+.raised{border-radius:999px;padding:calc(var(--u)*4) calc(var(--u)*14);font-size:calc(var(--u)*17);--c:#fff;box-shadow:0 calc(var(--u)*3) 0 var(--cream-d);color:var(--ink2);pointer-events:none;z-index:2}
+.zgrid{position:absolute;left:calc(var(--u)*24);right:calc(var(--u)*24);top:calc(var(--u)*112);bottom:calc(var(--u)*20);display:grid;grid-template-columns:calc(var(--u)*130) repeat(6,1fr);grid-template-rows:calc(var(--u)*30) repeat(4,1fr);gap:calc(var(--u)*8)}
+.zh{display:flex;align-items:flex-end;justify-content:center;font-size:calc(var(--u)*18);color:var(--ink2)}
+.zt{display:flex;flex-direction:column;justify-content:center;line-height:1.2}
+.zt b{font-size:calc(var(--u)*22);font-weight:900}
+.zt span{font-size:calc(var(--u)*13);color:var(--ink2);margin-top:calc(var(--u)*4)}
+.zc{border-radius:calc(var(--u)*20);--c:#FBF6EE;--sc:rgba(138,119,104,.3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:calc(var(--u)*6) calc(var(--u)*4) calc(var(--u)*8);overflow:hidden}
+.zc>svg,.zc .sil{flex:1;min-height:0;width:100%}
+.zc svg{width:100%;height:100%;overflow:visible}
+.zc .sil{filter:brightness(0);opacity:.13}
+.zc p{font-size:calc(var(--u)*17);font-weight:900;white-space:nowrap;line-height:1.2}
+.zc p small{font-size:calc(var(--u)*12);color:var(--ink2)}
+.zc:not(.on) p{color:#C9BBA8}
+.zc.on{--c:#FFF8E6;box-shadow:0 calc(var(--u)*4) 0 var(--mustard-d)}
+.choice{position:relative;margin-top:calc(var(--u)*18);text-align:center}
+.choice .small{color:#F3E9DA;font-size:calc(var(--u)*24);margin-bottom:calc(var(--u)*10)}
+.choice .row{display:flex;gap:calc(var(--u)*18)}
+.choice .btn{width:calc(var(--u)*300);height:calc(var(--u)*88);font-size:calc(var(--u)*28);margin:0}

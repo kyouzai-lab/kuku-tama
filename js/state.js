@@ -8,11 +8,12 @@ const FAST = new URLSearchParams(location.search).has('fast');
 export const CHALLENGE_SEC = FAST ? 8 : 45;   // 2026-11-23 60→45秒に変更
 export const CARE_SEC = 60;
 export const CARE_MAX_ACTIONS = 2;
-// 次の姿に進む条件（チャレンジした日数・けいけんち）。数字は試してから調整する
+// 次の姿に進む条件（けいけんち）。がんばるほど早く育つ。1日に進めるのは1だんかいまで
+// 2026-11-23 日数の条件をやめた（がんばりで すぐ育つ形に）。数字は試してから調整する
 export const NEED = {
-  egg:   { days: 3, exp: 30, next: 'baby' },
-  baby:  { days: 7, exp: 100, next: 'child' },
-  child: { days: 10, exp: 200, next: 'adult' },
+  egg:   { exp: 20, next: 'baby' },
+  baby:  { exp: 80, next: 'child' },
+  child: { exp: 150, next: 'adult' },
 };
 
 export let storageOK = true;
@@ -37,7 +38,7 @@ function daysBetween(a, b) { return Math.round((new Date(b) - new Date(a)) / 864
 
 // ---------- 記録 ----------
 function blank() {
-  return { v: 1, pet: null, day: { key: null, plays: 0 }, facts: {}, history: [], inProgress: null, lastSeenDay: null, settings: {} };
+  return { v: 1, pet: null, day: { key: null, plays: 0 }, facts: {}, history: [], inProgress: null, lastSeenDay: null, settings: {}, zukan: [] };
 }
 
 export let S = load();
@@ -69,25 +70,45 @@ export function playsLeft() { return Math.max(0, PLAYS_PER_DAY - S.day.plays); }
 
 // ---------- キャラ ----------
 export function newPet(species, name) {
-  S.pet = { species, name, stage: 'egg', type: null, stageDays: 0, stageExp: 0, lastPlayDay: null,
+  S.pet = { species, name, stage: 'egg', type: null, stageDays: 0, stageExp: 0, lastPlayDay: null, lastGrowDay: null,
     totalExp: 0, food: 0, hearts: 0, tally: { kotsu: 0, chosen: 0, nandemo: 0, ganba: 0 }, born: todayKey() };
   save();
 }
 
-export function canGrow() {
+// けいけんちがたまったか（きょう もう育っていたら あしたまで まつ）
+export function expFull() {
   const p = S.pet, n = NEED[p.stage];
-  return !!n && p.stageDays >= n.days && p.stageExp >= n.exp;
+  return !!n && p.stageExp >= n.exp;
 }
+export function grewToday() { return S.pet.lastGrowDay === S.day.key; }
+export function canGrow() { return expFull() && !grewToday(); }
 
 export function grow() {
   const p = S.pet, n = NEED[p.stage];
   const from = p.stage;
   p.stage = n.next;
-  p.stageDays = 0; p.stageExp = 0;
-  if (p.stage === 'adult') p.type = decideType(p.tally);
+  p.stageExp = Math.max(0, p.stageExp - n.exp);   // あまった けいけんちは 次に持ちこす
+  p.lastGrowDay = S.day.key;
+  if (p.stage === 'adult') {
+    p.type = decideType(p.tally);
+    S.zukan.push({ species: p.species, type: p.type, name: p.name, date: S.day.key, left: null });
+  }
   save();
   return { from, to: p.stage, type: p.type };
 }
+
+// おとなを たびだたせる → 図鑑に のこして、次のたまごへ
+export function farewell() {
+  const p = S.pet;
+  const e = [...S.zukan].reverse().find(z => z.species === p.species && z.type === p.type && z.name === p.name && !z.left);
+  if (e) e.left = S.day.key;
+  S.pet = null;
+  save();
+}
+
+// 図鑑：なかま×タイプ ごとの記録
+export function zukanFor(species, type) { return S.zukan.filter(z => z.species === species && z.type === type); }
+export function raisedCount(species) { return S.zukan.filter(z => z.species === species).length; }
 
 function decideType(t) {
   const order = ['ganba', 'nandemo', 'chosen', 'kotsu'];

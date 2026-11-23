@@ -36,15 +36,20 @@ export function floatAt(parent, x, y, svg, size = 50) {
 }
 
 // ================= たまごえらび =================
+const BOOK = '<svg viewBox="0 0 40 40" style="width:70%;height:70%"><g filter="url(#felt)"><path d="M6 9 Q13 6 20 10 L20 33 Q13 29 6 32 Z" fill="#86C2A3"/><path d="M34 9 Q27 6 20 10 L20 33 Q27 29 34 32 Z" fill="#9CC6DE"/><path d="M20 10 L20 33" stroke="#4A3B32" stroke-width="2"/></g></svg>';
+
 function showEggPick() {
   const sps = Object.keys(A.SPECIES), cols = [200, 512, 824], rows = [230, 450];
+  const again = G.S.zukan.length > 0;
   const cush = ['--c:#86C2A3;box-shadow:0 calc(var(--u)*5) 0 #5E9A7C', '--c:#F2A7A3;box-shadow:0 calc(var(--u)*5) 0 #D4847F', '--c:#9CC6DE;box-shadow:0 calc(var(--u)*5) 0 #78A6C2'];
   let h = `<div class="screen"><div class="wall"></div><div class="floor felt" style="height:${px(150)}"></div>
-    <div class="a title felt st puffy">どの たまごに する？</div>`;
+    <div class="a title felt st puffy">${again ? 'つぎの たまごを えらぼう' : 'どの たまごに する？'}</div>
+    ${again ? `<button class="a gear felt st puffy press" id="zbtn" aria-label="ずかん">${BOOK}</button>` : ''}`;
   sps.forEach((sp, i) => {
-    const x = cols[i % 3], y = rows[Math.floor(i / 3)];
+    const x = cols[i % 3], y = rows[Math.floor(i / 3)], n = G.raisedCount(sp);
     h += `<div class="cushion felt" style="left:${px(x - 115)};top:${px(y + 125)};${cush[i % 3]}"></div>`;
     h += `<button class="eggbtn" data-sp="${sp}" style="left:${px(x - 110)};top:${px(y - 30)}" aria-label="たまご ${i + 1}">${A.egg(sp)}</button>`;
+    if (n) h += `<div class="a raised felt" style="left:${px(x + 30)};top:${px(y - 30)}">そだてた ${n}</div>`;
   });
   h += `<div class="a small" style="left:${px(40)};bottom:${px(52)};font-size:${px(22)}">たまごを タッチしてね</div>
     <button class="a btn main felt st puffy press" id="pick" disabled style="right:${px(40)};bottom:${px(28)};width:${px(340)};height:${px(84)};font-size:${px(30)}">この たまごに する</button></div>`;
@@ -55,7 +60,65 @@ function showEggPick() {
     b.classList.add('sel'); sel = b.dataset.sp; s.querySelector('#pick').disabled = false;
   }));
   s.querySelector('#pick').addEventListener('click', () => sel && showName(sel));
+  s.querySelector('#zbtn')?.addEventListener('click', () => showZukan(showEggPick));
   pressable(s);
+}
+
+// ================= ずかん =================
+function showZukan(back) {
+  const sps = Object.keys(A.SPECIES), types = Object.keys(A.TYPES);
+  const met = new Set(G.S.zukan.map(z => z.species + ':' + z.type));
+  let cells = '<div></div>' + sps.map(sp => `<div class="zh">${A.SPECIES[sp].n}</div>`).join('');
+  types.forEach(t => {
+    cells += `<div class="zt"><b>${A.TYPES[t].n}</b><span>${A.TYPES[t].s}</span></div>`;
+    sps.forEach(sp => {
+      const list = G.zukanFor(sp, t);
+      if (list.length) {
+        const nm = list[list.length - 1].name + (list.length > 1 ? `<small> ほか${list.length - 1}</small>` : '');
+        cells += `<div class="zc felt st on">${A.critter(sp, 'adult', t)}<p>${nm}</p></div>`;
+      } else {
+        cells += `<div class="zc felt st"><div class="sil">${A.critter(sp, 'adult', t).replace('filter="url(#felt)"', '')}</div><p>？</p></div>`;
+      }
+    });
+  });
+  const s = setScreen(el(`<div class="screen"><div class="wall"></div>
+    <button class="a btn sub felt st puffy press" id="back" style="left:${px(30)};top:${px(26)};width:${px(170)};height:${px(70)};font-size:${px(24)}">もどる</button>
+    <div class="a pill felt st puffy" style="left:${px(230)};top:${px(26)};font-size:${px(30)};font-weight:900">ずかん　${met.size} / 24</div>
+    <div class="a small" style="left:${px(540)};top:${px(44)}">そだてた子：${G.S.zukan.length}ひき${G.S.pet ? '' : ''}</div>
+    <div class="zgrid">${cells}</div>
+  </div>`));
+  s.querySelector('#back').addEventListener('click', back);
+  pressable(s);
+}
+
+// ================= たびだち =================
+function confirmTravel(parent) {
+  const p = G.S.pet;
+  const d = el(`<div><div class="dim" style="z-index:39"></div><div class="a card dialog felt st puffy"><p>${p.name}を たびだたせる？<br><span class="small" style="font-size:${px(22)}">ずかんには ずっと のこるよ。<br>つぎの たまごを えらべるよ</span></p><div class="row">
+    <button class="btn sub felt st puffy press" id="no">やめる</button>
+    <button class="btn main felt st puffy press" id="yes">たびだたせる</button></div></div></div>`);
+  parent.appendChild(d); pressable(d);
+  d.querySelector('#no').addEventListener('click', () => d.remove());
+  d.querySelector('#yes').addEventListener('click', () => { d.remove(); farewellScene(parent); });
+}
+
+async function farewellScene(parent) {
+  const p = G.S.pet;
+  const svg = A.critter(p.species, 'adult', p.type, { face: 'happy' });
+  const name = p.name;
+  G.farewell();
+  const ov = el(`<div class="grow"><div class="fig reveal" style="transition:transform 2s ease-in, opacity 2s ease-in">${svg}</div><h2>いってきます！<small>${name}、いままで ありがとう。またね！</small></h2></div>`);
+  parent.appendChild(ov);
+  const fig = ov.querySelector('.fig');
+  await wait(1600);
+  fig.style.transform = `translateX(${px(560)}) translateY(${px(-30)}) scale(.7)`;
+  fig.style.opacity = '0';
+  await wait(2000);
+  ov.querySelector('h2').innerHTML = `${name}は たびに でたよ<small>ずかんに のこっているよ</small>`;
+  const btn = el('<button class="btn main felt st puffy press">つぎの たまごを えらぶ</button>');
+  ov.appendChild(btn); pressable(ov);
+  btn.style.width = px(420);
+  btn.addEventListener('click', showEggPick);
 }
 
 // ================= なまえつけ =================
@@ -117,32 +180,30 @@ function bubbleText(p, night) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+const GOAL = { egg: 'うまれる', baby: 'こどもに なる', child: 'おとなに なる' };
+
 function panelHTML(p, night) {
   const need = G.NEED[p.stage];
   const stock = `<div class="stock"><span>${A.ONIGIRI}${p.food}</span><span>${A.HEART}${p.hearts}</span></div>`;
+  const leftExp = need ? Math.max(0, need.exp - p.stageExp) : 0;
   if (night) {
     let tomorrow = 'あした また あおうね';
-    if (need) {
-      const left = Math.max(0, need.days - p.stageDays);
-      const what = { egg: 'うまれる', baby: 'こどもに なる', child: 'おとなに なる' }[p.stage];
-      if (left > 0) tomorrow = `あと ${left}日で ${what}かも！`;
-    }
+    if (need) tomorrow = G.expFull() ? `あした ${GOAL[p.stage]}よ！ たのしみだね` : `あと ${leftExp} けいけんちで ${GOAL[p.stage]}よ`;
     return `<div style="font-size:${px(26)};font-weight:900">きょうは 3かい がんばったね</div><div class="small" style="margin-top:${px(6)}">${tomorrow}</div>`;
   }
   if (!need) {
     return `<div style="font-size:${px(24)};font-weight:900">おとなに なったよ！</div>
-      <div class="small">${A.TYPES[p.type].n}タイプ ／ けいけんち ${p.totalExp}</div>${stock}`;
+      <div class="small">${A.TYPES[p.type].n}タイプ ／ ずかんに のってるよ</div>${stock}
+      <button class="btn sub felt st puffy press" id="travel" style="width:100%;height:${px(60)};margin-top:${px(12)};font-size:${px(22)}">たびだたせる…</button>`;
   }
-  const what = { egg: 'うまれるまで', baby: 'こどもに なるまで', child: 'おとなに なるまで' }[p.stage];
-  const left = Math.max(0, need.days - p.stageDays);
-  const head = left > 0
-    ? `${what} あと <b style="color:var(--ink);font-size:${px(26)}">${left}</b>日`
-    : `あと すこし！ けいけんちを ためよう`;
-  const eggs = Array.from({ length: need.days }, (_, i) => `<i class="${i < p.stageDays ? 'on' : ''}"></i>`).join('');
-  const pct = Math.min(100, p.stageExp / need.exp * 100);
+  let head;
+  if (!G.expFull()) head = `${GOAL[p.stage]}まで あと <b style="color:var(--ink);font-size:${px(28)}">${leftExp}</b> けいけんち`;
+  else if (G.grewToday()) head = `じゅんび OK！ あした ${GOAL[p.stage]}よ`;
+  else head = `つぎの くくで ${GOAL[p.stage]}よ！`;
+  const ratio = Math.min(1, p.stageExp / need.exp);
+  const eggs = Array.from({ length: 10 }, (_, i) => `<i class="${i < Math.floor(ratio * 10 + 1e-9) ? 'on' : ''}"></i>`).join('');
   return `<div class="small">${head}</div><div class="eggrow">${eggs}</div>
-    <div class="small">けいけんち ${Math.min(p.stageExp, need.exp)} / ${need.exp}</div>
-    <div class="gauge"><i class="felt" style="width:${pct}%"></i></div>${stock}`;
+    <div class="gauge"><i class="felt" style="width:${ratio * 100}%"></i></div>${stock}`;
 }
 
 // opt.day: 夜にしない（けっか・お世話のとき） / opt.care: パネルとボタンをかくす
@@ -167,6 +228,7 @@ export function showRoom(opt = {}) {
     <div class="a rug felt st"></div>
     <div class="a namepill pill felt st puffy ${opt.care ? 'hide' : ''}"><b>${p.name}</b><small>${A.STAGE_NAMES[p.stage]}</small></div>
     <button class="a gear felt st puffy press ${opt.care ? 'hide' : ''}" id="gear" aria-label="せってい">⚙</button>
+    <button class="a gear zbtn felt st puffy press ${opt.care ? 'hide' : ''}" id="zbtn" aria-label="ずかん">${BOOK}</button>
     <div class="pet ${isEgg ? 'egg' : ''}" id="pet"><div class="body ${isEgg ? 'wiggle' : (night ? '' : 'breathe')}">${petSVG(p, night ? 'sleep' : 'normal')}</div></div>
     <div class="a bubble felt st puffy ${opt.care ? 'hide' : ''}" id="bubble" style="left:${px(isEgg ? 680 : 740)};top:${px(isEgg ? 300 : 236)}">${bubbleText(p, night)}<i></i></div>
     <div class="a panel felt st puffy ${opt.care ? 'hide' : ''}">${panelHTML(p, night)}</div>
@@ -184,7 +246,9 @@ export function showRoom(opt = {}) {
       b.firstChild.textContent = night ? 'むにゃむにゃ…' : (isEgg ? '…ことっ' : 'えへへ');
     });
     s.querySelector('#gear').addEventListener('click', showSettings);
+    s.querySelector('#zbtn').addEventListener('click', () => showZukan(() => showRoom()));
     s.querySelector('#go').addEventListener('click', () => { if (G.playsLeft() > 0) showDan(); });
+    s.querySelector('#travel')?.addEventListener('click', () => confirmTravel(s));
   }
   pressable(s);
   return s;
@@ -373,11 +437,21 @@ async function showGrow(after) {
   const sp = A.SPECIES[p.species].n;
   if (r.to === 'baby') h2.innerHTML = `${p.name}が うまれたよ！<small>${sp}の あかちゃん</small>`;
   if (r.to === 'child') h2.innerHTML = `${p.name}が おおきく なったよ！<small>${sp}の こども</small>`;
-  if (r.to === 'adult') h2.innerHTML = `${p.name}が おとなに なったよ！<small>${A.TYPES[r.type].n}タイプの ${sp}</small>`;
+  if (r.to === 'adult') h2.innerHTML = `${p.name}が おとなに なったよ！<small>${A.TYPES[r.type].n}タイプの ${sp}　ずかんに のったよ！</small>`;
   await wait(700);
-  const btn = el('<button class="btn main felt st puffy press">つぎへ</button>');
-  ov.appendChild(btn); pressable(ov);
-  btn.addEventListener('click', () => { ov.remove(); after(); });
+  if (r.to !== 'adult') {
+    const btn = el('<button class="btn main felt st puffy press">つぎへ</button>');
+    ov.appendChild(btn); pressable(ov);
+    btn.addEventListener('click', () => { ov.remove(); after(); });
+    return;
+  }
+  // おとなに なったら：このまま そだてる か たびだたせる か
+  const row = el(`<div class="choice"><div class="small">どうする？</div><div class="row">
+    <button class="btn main felt st puffy press" id="stay">このまま いっしょに</button>
+    <button class="btn sub felt st puffy press" id="go2">たびだたせる</button></div></div>`);
+  ov.appendChild(row); pressable(row);
+  row.querySelector('#stay').addEventListener('click', () => { ov.remove(); after(); });
+  row.querySelector('#go2').addEventListener('click', () => { ov.remove(); s.querySelector('#pet').style.visibility = ''; farewellScene(s); });
 }
 
 // ================= せってい =================
@@ -443,7 +517,7 @@ function debugBar() {
     if (a === 'plays') G.S.day.plays = 0;
     if (a === 'exp') { p.stageExp += 50; p.totalExp += 50; }
     if (a === 'food') p.food += 5;
-    if (a === 'grow' && G.NEED[p.stage]) { p.stageDays = G.NEED[p.stage].days; p.stageExp = G.NEED[p.stage].exp; }
+    if (a === 'grow' && G.NEED[p.stage]) { p.stageExp = Math.max(p.stageExp, G.NEED[p.stage].exp); p.lastGrowDay = null; }
     if (a === 'type') { alert(JSON.stringify(p.tally)); return; }
     G.save(); showRoom();
   });
