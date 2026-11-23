@@ -305,9 +305,8 @@ async function startChallenge(mode) {
     <div class="a ansbox felt st puffy caret" id="ans"></div>
     <div class="pad">
       ${[7, 8, 9, 4, 5, 6, 1, 2, 3].map(n => `<button class="felt st puffy press" data-n="${n}">${n}</button>`).join('')}
+      <button class="felt st puffy press z" data-n="0">0</button>
       <button class="felt st puffy press s" id="bs">けす</button>
-      <button class="felt st puffy press" data-n="0">0</button>
-      <button class="felt st puffy press ok" id="enter">こたえる</button>
     </div>
     <div class="a peek" id="peek" style="${p.stage === 'egg' ? `left:${px(50)};bottom:${px(-30)};width:${px(130)};height:${px(163)}` : ''}">${peekSVG}</div>
     <div class="a bubble felt st puffy cheer" id="cheer">がんばれ！<i></i></div>
@@ -367,15 +366,19 @@ async function startChallenge(mode) {
       setTimeout(() => { if (!ended) ask(); }, 1300);
     }
   };
-  const press = (n) => { if (locked || ended) return; if (input.length < 2) { input += n; draw(); } };
+  // 2026-11-23 こたえるボタンをやめ、こたえと同じ けた数を打ったら すぐ判定する
+  // （6なら1けた目で、12なら2けた目で）。数字が見えるように少しだけ待ってから判定
+  const press = (n) => {
+    if (locked || ended) return;
+    input += n; draw();
+    if (input.length >= String(cur.a * cur.b).length) { locked = true; setTimeout(() => { locked = false; submit(); }, 120); }
+  };
   const back = () => { if (locked || ended) return; input = input.slice(0, -1); draw(); };
   s.querySelectorAll('[data-n]').forEach(b => b.addEventListener('pointerdown', () => press(b.dataset.n)));
   s.querySelector('#bs').addEventListener('pointerdown', back);
-  s.querySelector('#enter').addEventListener('pointerdown', submit);
   const onKey = (e) => {
     if (/^[0-9]$/.test(e.key)) press(e.key);
     else if (e.key === 'Backspace') back();
-    else if (e.key === 'Enter') submit();
   };
   document.addEventListener('keydown', onKey);
 

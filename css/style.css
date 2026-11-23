@@ -155,7 +155,7 @@ button:disabled{cursor:default}
 .pad{position:absolute;right:calc(var(--u)*30);top:calc(var(--u)*120);width:calc(var(--u)*410);bottom:calc(var(--u)*30);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:calc(var(--u)*16)}
 .pad button{border-radius:calc(var(--u)*24);font-size:calc(var(--u)*48);font-weight:900;--c:#FBF6EE;--sh:var(--cream-d);display:flex;align-items:center;justify-content:center}
 .pad button.s{font-size:calc(var(--u)*24);color:var(--ink2)}
-.pad button.ok{--c:var(--tomato);--sh:var(--tomato-d);--sc:rgba(255,255,255,.7);color:#fff;font-size:calc(var(--u)*26)}
+.pad button.z{grid-column:span 2}
 .peek{left:calc(var(--u)*24);bottom:calc(var(--u)*-70);width:calc(var(--u)*190);height:calc(var(--u)*228);transition:transform .2s}
 .peek svg{width:100%;height:100%;overflow:visible}
 .cheer{left:calc(var(--u)*190);bottom:calc(var(--u)*90);font-size:calc(var(--u)*20)}
