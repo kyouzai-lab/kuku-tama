@@ -28,7 +28,7 @@ button:disabled{cursor:default}
 .btn.main:disabled{--c:#D9CBB8;--sh:#BFAF99;--sc:rgba(255,255,255,.5);color:#fff}
 .btn.sub{--c:var(--cream)}
 .pill{border-radius:999px;padding:calc(var(--u)*10) calc(var(--u)*26);white-space:nowrap}
-.bubble{border-radius:calc(var(--u)*28);padding:calc(var(--u)*14) calc(var(--u)*26);white-space:nowrap;font-size:calc(var(--u)*24);z-index:3;transition:opacity .25s}
+.bubble{border-radius:calc(var(--u)*28);padding:calc(var(--u)*14) calc(var(--u)*26);max-width:calc(var(--u)*250);line-height:1.35;font-size:calc(var(--u)*24);z-index:3;transition:opacity .25s}
 .bubble i{position:absolute;left:calc(var(--u)*30);bottom:calc(var(--u)*-14);width:calc(var(--u)*28);height:calc(var(--u)*28);background:inherit;transform:rotate(45deg);border-radius:0 0 calc(var(--u)*8) 0}
 .small{font-size:calc(var(--u)*18);color:var(--ink2)}
 .dim{position:absolute;inset:0;background:rgba(46,40,36,.42);animation:fadein .25s ease-out}
@@ -40,7 +40,7 @@ button:disabled{cursor:default}
 .wall{position:absolute;inset:0;--c:var(--cream);background-color:var(--c);background-image:var(--noise),radial-gradient(circle,rgba(214,181,138,.35) calc(var(--u)*4),transparent calc(var(--u)*5));background-size:auto,calc(var(--u)*56) calc(var(--u)*56);transition:background-color .8s}
 .floor{position:absolute;left:0;right:0;bottom:0;height:calc(var(--u)*260);--c:var(--caramel);transition:background-color .8s}
 .floor::after{content:"";position:absolute;left:0;right:0;top:calc(var(--u)*14);border-top:calc(var(--u)*2.5) dashed rgba(255,255,255,.55)}
-.rug{left:calc(var(--u)*352);bottom:calc(var(--u)*64);width:calc(var(--u)*320);height:calc(var(--u)*110);border-radius:50%;--c:var(--mint);--sc:rgba(255,255,255,.55);box-shadow:0 calc(var(--u)*5) 0 var(--mint-d)}
+.rug{left:calc(var(--u)*392);bottom:calc(var(--u)*64);width:calc(var(--u)*320);height:calc(var(--u)*110);border-radius:50%;--c:var(--mint);--sc:rgba(255,255,255,.55);box-shadow:0 calc(var(--u)*5) 0 var(--mint-d)}
 .window{left:calc(var(--u)*64);top:calc(var(--u)*112);width:calc(var(--u)*210);height:calc(var(--u)*184);border-radius:calc(var(--u)*32);--c:var(--sky);--sh:var(--sky-d);--sc:rgba(255,255,255,.5);overflow:hidden}
 .mull{position:absolute;background-color:var(--cream);background-image:var(--noise);z-index:1}
 .cloud{position:absolute;background:#fff;background-image:var(--noise);border-radius:999px;opacity:.95;animation:drift 40s linear infinite}
@@ -74,7 +74,7 @@ button:disabled{cursor:default}
 .go small{font-size:calc(var(--u)*18);margin-top:calc(var(--u)*6);opacity:.9}
 .go.idle{animation:nudge 3.2s ease-in-out infinite}
 @keyframes nudge{0%,80%,100%{transform:scale(1)}88%{transform:scale(1.04)}}
-.pet{position:absolute;left:calc(var(--u)*312);top:calc(var(--u)*197);width:calc(var(--u)*400);height:calc(var(--u)*480);z-index:2;touch-action:none}
+.pet{position:absolute;left:calc(var(--u)*352);top:calc(var(--u)*197);width:calc(var(--u)*400);height:calc(var(--u)*480);z-index:2;touch-action:none}
 .pet .body{position:absolute;inset:0;filter:drop-shadow(0 calc(var(--u)*8) calc(var(--u)*6) rgba(74,59,50,.22));transform-origin:50% 94%;will-change:transform}
 .pet .body svg{width:100%;height:100%;overflow:visible}
 .pet.egg .body{left:22%;right:22%;top:30%;bottom:4%}
@@ -193,7 +193,7 @@ button:disabled{cursor:default}
 .suds{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff 0 30%,rgba(255,255,255,.75) 55%,rgba(200,230,245,.6));box-shadow:0 0 0 calc(var(--u)*2) rgba(156,198,222,.6);pointer-events:none;z-index:7;animation:pop .2s ease-out}
 .suds.rinse{transition:transform .9s ease-in,opacity .9s ease-in;transform:translateY(calc(var(--u)*120));opacity:0}
 .shower{position:absolute;left:calc(var(--u)*420);top:calc(var(--u)*90);width:calc(var(--u)*180);height:calc(var(--u)*330);z-index:8;pointer-events:none;background:repeating-linear-gradient(100deg,rgba(156,198,222,.0) 0 calc(var(--u)*12),rgba(156,198,222,.55) calc(var(--u)*12) calc(var(--u)*16));animation:fadein .3s;border-radius:40% 40% 10% 10%}
-.warm{position:absolute;left:calc(var(--u)*412);top:calc(var(--u)*400);width:calc(var(--u)*200);height:calc(var(--u)*200);border-radius:50%;background:radial-gradient(circle,rgba(240,190,75,.55),rgba(240,190,75,0) 70%);transform:scale(0);z-index:1;pointer-events:none}
+.warm{position:absolute;left:calc(var(--u)*452);top:calc(var(--u)*400);width:calc(var(--u)*200);height:calc(var(--u)*200);border-radius:50%;background:radial-gradient(circle,rgba(240,190,75,.55),rgba(240,190,75,0) 70%);transform:scale(0);z-index:1;pointer-events:none}
 
 /* ---------- せいちょう ---------- */
 .grow{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(46,40,36,.55);animation:fadein .4s}

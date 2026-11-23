@@ -168,7 +168,7 @@ export function showRoom(opt = {}) {
     <div class="a namepill pill felt st puffy ${opt.care ? 'hide' : ''}"><b>${p.name}</b><small>${A.STAGE_NAMES[p.stage]}</small></div>
     <button class="a gear felt st puffy press ${opt.care ? 'hide' : ''}" id="gear" aria-label="せってい">⚙</button>
     <div class="pet ${isEgg ? 'egg' : ''}" id="pet"><div class="body ${isEgg ? 'wiggle' : (night ? '' : 'breathe')}">${petSVG(p, night ? 'sleep' : 'normal')}</div></div>
-    <div class="a bubble felt st puffy ${opt.care ? 'hide' : ''}" id="bubble" style="left:${px(isEgg ? 640 : 700)};top:${px(isEgg ? 300 : 236)}">${bubbleText(p, night)}<i></i></div>
+    <div class="a bubble felt st puffy ${opt.care ? 'hide' : ''}" id="bubble" style="left:${px(isEgg ? 680 : 740)};top:${px(isEgg ? 300 : 236)}">${bubbleText(p, night)}<i></i></div>
     <div class="a panel felt st puffy ${opt.care ? 'hide' : ''}">${panelHTML(p, night)}</div>
     <button class="a go felt st puffy ${opt.care ? 'hide' : ''} ${night ? '' : 'idle'}" id="go" ${night ? 'disabled' : ''}>${night ? '<span>またあした</span>' : `<b>くく</b><span>チャレンジ</span><small>のこり ${left}かい</small>`}</button>
     ${G.storageOK ? '' : '<div class="a warn felt puffy">この せってい では きろくが のこりません（プライベートブラウズを やめてください）</div>'}

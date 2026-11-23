@@ -20,7 +20,7 @@ export function startCare(showRoom) {
   const top = el(`<div class="a caretop"><div class="pill felt st puffy">おせわタイム</div><div class="gauge time"><i class="felt" style="width:100%"></i></div><div class="tl">のこり ${G.CARE_SEC}びょう</div></div>`);
   const tray = el(`<div class="a tray felt st puffy">${menu.map(([k, n, ic]) => `<button class="btn felt st puffy press" data-k="${k}">${ic}${n}${k === 'feed' ? `<small class="small">（${p.food}）</small>` : ''}</button>`).join('')}<button class="btn end felt st puffy press" id="end">おしまい</button></div>`);
   const hint = el(`<div class="a hint felt st puffy">なにを する？ ${G.CARE_MAX_ACTIONS}つ えらべるよ</div>`);
-  const bubble = el(`<div class="a bubble felt st puffy" style="left:${px(isEgg ? 640 : 700)};top:${px(isEgg ? 300 : 236)}">${isEgg ? 'ぽかぽか したいな' : (p.food > 0 ? 'おなか すいた' : 'あそびたいな')}<i></i></div>`);
+  const bubble = el(`<div class="a bubble felt st puffy" style="left:${px(isEgg ? 680 : 740)};top:${px(isEgg ? 300 : 236)}">${isEgg ? 'ぽかぽか したいな' : (p.food > 0 ? 'おなか すいた' : 'あそびたいな')}<i></i></div>`);
   s.append(top, tray, hint, bubble);
   if (!isEgg && p.food <= 0) { const b = tray.querySelector('[data-k=feed]'); b.disabled = true; b.classList.add('done'); }
 
@@ -131,7 +131,7 @@ export function startCare(showRoom) {
     say('おふろ だいすき！');
     const NEED = 22; let n = 0, lastPt = null, down = false;
     const suds = [];
-    const over = el(`<div class="a" style="left:${px(312)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
+    const over = el(`<div class="a" style="left:${px(352)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
     s.appendChild(over);
     const add = (pt) => {
       if (lastPt && Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y) < 22) return;
@@ -205,7 +205,7 @@ export function startCare(showRoom) {
     ball.addEventListener('pointercancel', release);
     async function fetch() {
       // キャラがボールのところまで歩く
-      const target = Math.max(-300, Math.min(300, x - 512));
+      const target = Math.max(-300, Math.min(300, x - 552));
       petEl.style.transition = 'transform .7s ease-in-out';
       petEl.style.transform = `translateX(${px(target)})`;
       petX = target;
@@ -220,7 +220,7 @@ export function startCare(showRoom) {
         return;
       }
       // ボールを足もとに もどす
-      x = Math.max(R, Math.min(1024 - R, 512 + petX + 150)); y = FLOOR - R; vx = vy = 0; place();
+      x = Math.max(R, Math.min(1024 - R, 552 + petX + 150)); y = FLOOR - R; vx = vy = 0; place();
       hint.textContent = `ボールを はじいてね（あと ${3 - throws}かい）`;
     }
     return () => { alive = false; cancelAnimationFrame(raf); ball.remove(); petEl.style.transform = ''; };
@@ -231,7 +231,7 @@ export function startCare(showRoom) {
     hint.textContent = 'たまごを ゆびで なでなで しよう';
     say('…ことこと');
     let dist = 0, last = null, down = false, cnt = 0;
-    const over = el(`<div class="a" style="left:${px(312)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
+    const over = el(`<div class="a" style="left:${px(352)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
     s.appendChild(over);
     over.addEventListener('pointerdown', (e) => { down = true; last = toStage(e); cap(over, e); });
     over.addEventListener('pointermove', (e) => {
@@ -249,7 +249,7 @@ export function startCare(showRoom) {
     hint.textContent = 'たまごを ゆびで おさえて あたためよう';
     say('ぽかぽか したいな');
     const glow = s.querySelector('.warm');
-    const over = el(`<div class="a" style="left:${px(312)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
+    const over = el(`<div class="a" style="left:${px(352)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
     s.appendChild(over);
     let k = 0, holding = false, raf = 0, last = 0;
     const tick = (t) => {
