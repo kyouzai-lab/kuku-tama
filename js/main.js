@@ -44,7 +44,8 @@ function showEggPick() {
   const cush = ['--c:#86C2A3;box-shadow:0 calc(var(--u)*5) 0 #5E9A7C', '--c:#F2A7A3;box-shadow:0 calc(var(--u)*5) 0 #D4847F', '--c:#9CC6DE;box-shadow:0 calc(var(--u)*5) 0 #78A6C2'];
   let h = `<div class="screen"><div class="wall"></div><div class="floor felt" style="height:${px(150)}"></div>
     <div class="a title felt st puffy">${again ? 'つぎの たまごを えらぼう' : 'どの たまごに する？'}</div>
-    ${again ? `<button class="a gear felt st puffy press" id="zbtn" aria-label="ずかん">${BOOK}</button>` : ''}`;
+    ${again ? `<button class="a gear felt st puffy press" id="zbtn" aria-label="ずかん">${BOOK}</button>` : ''}
+    <button class="a btn sub felt st puffy press" id="restore" style="left:${px(24)};top:${px(24)};height:${px(56)};padding:0 ${px(20)};font-size:${px(17)}">きろくを もどす（せんせい）</button>`;
   sps.forEach((sp, i) => {
     const x = cols[i % 3], y = rows[Math.floor(i / 3)], n = G.raisedCount(sp);
     h += `<div class="cushion felt" style="left:${px(x - 115)};top:${px(y + 125)};${cush[i % 3]}"></div>`;
@@ -61,6 +62,7 @@ function showEggPick() {
   }));
   s.querySelector('#pick').addEventListener('click', () => sel && showName(sel));
   s.querySelector('#zbtn')?.addEventListener('click', () => showZukan(showEggPick));
+  s.querySelector('#restore').addEventListener('click', () => importFile(s));
   pressable(s);
 }
 
@@ -461,17 +463,24 @@ function showSettings() {
   const ov = el(`<div><div class="dim" style="z-index:39"></div>
     <div class="a card sheet felt st puffy">
       <h2>せってい</h2>
-      <div style="font-size:${px(26)}">なまえ：<b style="font-size:${px(34)}">${p.name}</b></div>
-      <button class="btn sub felt st puffy press" id="rn">なまえを かえる</button>
+      <div class="srow"><div style="font-size:${px(26)};flex:1">なまえ：<b style="font-size:${px(34)}">${p.name}</b></div>
+        <button class="btn sub felt st puffy press" id="rn" style="width:${px(230)}">なまえを かえる</button></div>
       <button class="btn main felt st puffy press" id="close">とじる</button>
       <div class="teacher">
-        <div class="small" style="margin-bottom:${px(10)}">せんせい よう</div>
+        <div class="small" style="margin-bottom:${px(8)}">せんせい よう</div>
+        ${G.isHomeScreenApp() ? '' : `<div class="tnote">Safariの「共有」→「ホーム画面に追加」から開くと、しばらく使わなくても きろくが きえにくく なります</div>`}
+        <div class="srow">
+          <button class="btn sub felt st puffy press" id="exp">ファイルに ほぞん</button>
+          <button class="btn sub felt st puffy press" id="imp">ファイルから もどす</button>
+        </div>
         <button class="btn felt st puffy" id="wipe"><i></i><span style="position:relative">データを けす（2びょう ながおし）</span></button>
       </div>
     </div></div>`);
   s.appendChild(ov); pressable(ov);
   ov.querySelector('#close').addEventListener('click', () => ov.remove());
   ov.querySelector('#rn').addEventListener('click', () => showName(p.species, { rename: true }));
+  ov.querySelector('#exp').addEventListener('click', () => exportFile(ov));
+  ov.querySelector('#imp').addEventListener('click', () => importFile(ov));
   const wipe = ov.querySelector('#wipe'), bar = wipe.querySelector('i');
   let t0 = 0, raf = 0;
   const stop = () => { cancelAnimationFrame(raf); bar.style.width = '0'; t0 = 0; };
@@ -502,6 +511,44 @@ function confirmWipe(parent) {
   show();
 }
 
+// ================= きろくの ほぞん・もどす =================
+function toast(parent, msg) {
+  const t = el(`<div class="a toast felt st puffy">${msg}</div>`);
+  parent.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+function exportFile(parent) {
+  const blob = new Blob([G.exportData()], { type: 'application/json' });
+  const name = G.S.pet ? G.S.pet.name : 'きろく';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `くくたま-${name}-${G.S.day.key || 'きろく'}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast(parent, 'ほぞんしたよ（「ファイル」アプリの ダウンロードに あります）');
+}
+
+function importFile(parent) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.addEventListener('change', async () => {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const text = await f.text();
+    const d = el(`<div><div class="dim" style="z-index:49"></div><div class="a card dialog felt st puffy"><p>この きろくに おきかえる？<br><span class="small" style="font-size:${px(22)}">いまの きろくは きえます</span></p><div class="row">
+      <button class="btn sub felt st puffy press" id="no">やめる</button>
+      <button class="btn main felt st puffy press" id="yes">おきかえる</button></div></div></div>`);
+    parent.appendChild(d); pressable(d);
+    d.querySelector('#no').addEventListener('click', () => d.remove());
+    d.querySelector('#yes').addEventListener('click', () => {
+      if (G.importData(text)) { location.reload(); return; }
+      d.remove(); toast(parent, 'くくたまの きろくの ファイルでは ないみたい');
+    });
+  });
+  inp.click();
+}
+
 // ================= ためし用（?debug=1） =================
 function debugBar() {
   const bar = el(`<div class="debug">
@@ -525,6 +572,7 @@ function debugBar() {
 
 // ================= はじまり =================
 function boot() {
+  G.askPersist();               // 記録を消さないよう ブラウザに たのむ
   G.recoverProgress();          // とちゅうで閉じたチャレンジの後しまつ（日付を進める前に）
   restMsg = G.syncDay();
   if (!G.S.pet) showEggPick(); else showRoom();

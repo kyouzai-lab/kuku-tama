@@ -49,6 +49,29 @@ function load() {
   try { return Object.assign(blank(), JSON.parse(raw)); } catch { return blank(); }
 }
 export function save() { writeRaw(KEY, JSON.stringify(S)); }
+
+// ---------- バックアップ（ファイルに書き出す・もどす） ----------
+export function exportData() {
+  return JSON.stringify({ app: 'kukutama', v: 1, savedAt: new Date().toISOString(), data: S });
+}
+// うまくいけば true。ちがうファイルなら false
+export function importData(text) {
+  let o;
+  try { o = JSON.parse(text); } catch { return false; }
+  if (!o || o.app !== 'kukutama' || !o.data || typeof o.data !== 'object') return false;
+  const d = o.data;
+  if (d.pet !== null && (typeof d.pet !== 'object' || !d.pet.species)) return false;
+  S = Object.assign(blank(), d, { inProgress: null });
+  save();
+  return true;
+}
+// ブラウザに「この記録は消さないで」とたのむ（ことわられても動きはかわらない）
+export function askPersist() {
+  try { navigator.storage?.persist?.().catch(() => {}); } catch {}
+}
+export function isHomeScreenApp() {
+  try { return navigator.standalone === true || matchMedia('(display-mode: standalone)').matches; } catch { return false; }
+}
 export function resetAll() { S = blank(); save(); try { localStorage.removeItem(OFFSET_KEY); } catch {} }
 
 // アプリを開いたとき・画面にもどったときの日付チェック

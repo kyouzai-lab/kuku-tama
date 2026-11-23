@@ -247,3 +247,12 @@ button:disabled{cursor:default}
 .choice .small{color:#F3E9DA;font-size:calc(var(--u)*24);margin-bottom:calc(var(--u)*10)}
 .choice .row{display:flex;gap:calc(var(--u)*18)}
 .choice .btn{width:calc(var(--u)*300);height:calc(var(--u)*88);font-size:calc(var(--u)*28);margin:0}
+
+/* ---------- せってい：きろくの ほぞん（2026-11-23） ---------- */
+.sheet{left:calc(var(--u)*200);right:calc(var(--u)*200);top:calc(var(--u)*40);bottom:calc(var(--u)*40);gap:calc(var(--u)*16)}
+.srow{display:flex;align-items:center;gap:calc(var(--u)*14);width:100%}
+.sheet .srow .btn{flex:1;width:auto;font-size:calc(var(--u)*21);height:calc(var(--u)*70)}
+.sheet .teacher{display:flex;flex-direction:column;gap:calc(var(--u)*12)}
+.tnote{font-size:calc(var(--u)*17);color:var(--tomato-d);background:#FFF1EC;border-radius:calc(var(--u)*14);padding:calc(var(--u)*8) calc(var(--u)*14);line-height:1.45;text-align:left}
+.toast{left:50%;bottom:calc(var(--u)*30);transform:translateX(-50%);z-index:60;border-radius:999px;padding:calc(var(--u)*14) calc(var(--u)*30);--c:#fff;font-size:calc(var(--u)*20);white-space:nowrap;animation:up .25s ease-out}
+.sheet .teacher .srow .btn{--c:#FBF6EE;--sh:var(--cream-d);color:var(--ink)}
