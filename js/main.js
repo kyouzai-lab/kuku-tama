@@ -86,11 +86,19 @@ function showZukan(back) {
   const s = setScreen(el(`<div class="screen"><div class="wall"></div>
     <button class="a btn sub felt st puffy press" id="back" style="left:${px(30)};top:${px(26)};width:${px(170)};height:${px(70)};font-size:${px(24)}">もどる</button>
     <div class="a pill felt st puffy" style="left:${px(230)};top:${px(26)};font-size:${px(30)};font-weight:900">ずかん　${met.size} / 24</div>
-    <div class="a small" style="left:${px(540)};top:${px(44)}">そだてた子：${G.S.zukan.length}ひき${G.S.pet ? '' : ''}</div>
+    <div class="a small" style="left:${px(530)};top:${px(30)};line-height:1.35">${zukanNote()}</div>
     <div class="zgrid">${cells}</div>
   </div>`));
   s.querySelector('#back').addEventListener('click', back);
   pressable(s);
+}
+
+// いつ ずかんに のるのかを 子どもに 分かるように
+function zukanNote() {
+  const p = G.S.pet;
+  const rule = `<b style="color:var(--ink);font-size:${px(22)}">おとなに なると ずかんに のるよ</b>`;
+  if (p && p.stage !== 'adult') return `${rule}<br>${p.name}は いま ${A.STAGE_NAMES[p.stage]}`;
+  return `${rule}<br>そだてた子：${G.S.zukan.length}ひき`;
 }
 
 // ================= たびだち =================
@@ -202,6 +210,7 @@ function panelHTML(p, night) {
   if (!G.expFull()) head = `${GOAL[p.stage]}まで あと <b style="color:var(--ink);font-size:${px(28)}">${leftExp}</b> けいけんち`;
   else if (G.grewToday()) head = `じゅんび OK！ あした ${GOAL[p.stage]}よ`;
   else head = `つぎの くくで ${GOAL[p.stage]}よ！`;
+  if (p.stage === 'child') head += `<br><span style="font-size:${px(18)}">おとなに なると ずかんに のるよ</span>`;
   const ratio = Math.min(1, p.stageExp / need.exp);
   const eggs = Array.from({ length: 10 }, (_, i) => `<i class="${i < Math.floor(ratio * 10 + 1e-9) ? 'on' : ''}"></i>`).join('');
   return `<div class="small">${head}</div><div class="eggrow">${eggs}</div>
@@ -218,12 +227,14 @@ export function showRoom(opt = {}) {
   const isEgg = p.stage === 'egg';
   const s = setScreen(el(`<div class="screen room ${night ? 'night' : ''}">
     <div class="wall"></div>
-    <div class="a window felt st puffy">
+    <div class="a curtain l felt st"></div><div class="a curtain r felt st"></div>
+    <div class="a window felt st puffy" role="button" aria-label="まど">
       ${night ? `<div class="moon" style="left:${px(120)};top:${px(26)};width:${px(50)};height:${px(50)}"></div><div class="star" style="left:${px(40)};top:${px(40)}"></div><div class="star" style="left:${px(70)};top:${px(120)}"></div><div class="star" style="left:${px(160)};top:${px(130)}"></div>`
         : `<div class="cloud" style="left:${px(24)};top:${px(40)};width:${px(80)};height:${px(30)}"></div><div class="cloud" style="left:${px(118)};top:${px(118)};width:${px(64)};height:${px(24)};animation-delay:-14s"></div>`}
       <div class="mull" style="left:calc(50% - var(--u)*6);top:0;bottom:0;width:${px(12)}"></div>
       <div class="mull" style="top:calc(50% - var(--u)*6);left:0;right:0;height:${px(12)}"></div>
     </div>
+    <div class="a sill felt st puffy"></div>
     ${lamps.map(([x, h], i) => `<div class="cord" style="left:${px(x)};height:${px(h)}"><div class="bulb ${i < left && !night ? 'on' : 'off'}"></div></div>`).join('')}
     <div class="floor felt"></div>
     <div class="warm"></div>
@@ -234,7 +245,7 @@ export function showRoom(opt = {}) {
     <div class="pet ${isEgg ? 'egg' : ''}" id="pet"><div class="body ${isEgg ? 'wiggle' : (night ? '' : 'breathe')}">${petSVG(p, night ? 'sleep' : 'normal')}</div></div>
     <div class="a bubble felt st puffy ${opt.care ? 'hide' : ''}" id="bubble" style="left:${px(isEgg ? 680 : 740)};top:${px(isEgg ? 300 : 236)}">${bubbleText(p, night)}<i></i></div>
     <div class="a panel felt st puffy ${opt.care ? 'hide' : ''}">${panelHTML(p, night)}</div>
-    <button class="a go felt st puffy ${opt.care ? 'hide' : ''} ${night ? '' : 'idle'}" id="go" ${night ? 'disabled' : ''}>${night ? '<span>またあした</span>' : `<b>くく</b><span>チャレンジ</span><small>のこり ${left}かい</small>`}</button>
+    <button class="a go felt st puffy press ${opt.care ? 'hide' : ''} ${night ? '' : 'idle'}" id="go">${night ? '<span>またあした</span><small>きょうは おしまい</small>' : `<b>くく</b><span>チャレンジ</span><small>のこり ${left}かい</small>`}</button>
     ${G.storageOK ? '' : '<div class="a warn felt puffy">この せってい では きろくが のこりません（プライベートブラウズを やめてください）</div>'}
   </div>`));
   const petEl = s.querySelector('#pet');
@@ -249,7 +260,20 @@ export function showRoom(opt = {}) {
     });
     s.querySelector('#gear').addEventListener('click', showSettings);
     s.querySelector('#zbtn').addEventListener('click', () => showZukan(() => showRoom()));
-    s.querySelector('#go').addEventListener('click', () => { if (G.playsLeft() > 0) showDan(); });
+    s.querySelector('#go').addEventListener('click', () => {
+      if (G.playsLeft() > 0) { showDan(); return; }
+      // 夜は ねむっている。おしても チャレンジには行かない
+      const b = s.querySelector('#bubble');
+      b.firstChild.textContent = 'Zzz… また あした くく しようね';
+      b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    });
+    // まど：さわると ひとこと
+    s.querySelector('.window').addEventListener('click', () => {
+      const b = s.querySelector('#bubble');
+      const msg = night ? ['おほしさま きれい…', 'おつきさま まんまる'] : ['いい おてんきだね', 'くもが ながれてるね', 'おそと あかるいね'];
+      b.firstChild.textContent = msg[Math.floor(Math.random() * msg.length)];
+      b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    });
     s.querySelector('#travel')?.addEventListener('click', () => confirmTravel(s));
   }
   pressable(s);
@@ -268,7 +292,7 @@ function showDan() {
     <div class="a pill felt st puffy" style="left:${px(230)};top:${px(30)};font-size:${px(30)};font-weight:900">どの だんに する？</div>
     <div class="a small" style="left:${px(60)};top:${px(118)}">いくつでも えらべるよ</div>
     <div class="dans">${dans}</div>
-    <button class="a omakase felt st puffy press" id="om"><b>おまかせ</b><span>ぜんぶの だんから<br>にがてを おおめに</span><span class="weakn">にがて ${weakN}もん</span></button>
+    <button class="a omakase felt st puffy press" id="om"><b>おまかせ</b><span>ぜんぶの だんから<br>にがてを おおめに</span><span class="weakn">にがて ${weakN}もん</span><span class="weakrule">2かい つづけて せいかいで<br>にがて そつぎょう</span></button>
     <button class="a btn main felt st puffy press" id="start" style="left:${px(330)};bottom:${px(40)};width:${px(380)};height:${px(100)};font-size:${px(40)}">スタート</button>
   </div>`));
   const start = s.querySelector('#start'), om = s.querySelector('#om');
@@ -322,6 +346,7 @@ async function startChallenge(mode) {
     cur = next(); input = '';
     $q.textContent = `${cur.a} × ${cur.b} ＝`;
     $q.classList.toggle('weak', cur.weak);
+    $q.dataset.tag = cur.weak ? `にがて　あと ${cur.left}かい せいかいで そつぎょう` : '';
     $ans.className = 'a ansbox felt st puffy caret'; draw();
     locked = false;
   };
@@ -349,6 +374,7 @@ async function startChallenge(mode) {
     locked = true;
     const given = parseInt(input, 10), ok = given === cur.a * cur.b;
     answers.push({ a: cur.a, b: cur.b, weak: cur.weak, given, ok });
+    const grad = next.mark(cur.a, cur.b, ok).graduated;
     G.saveProgress({ start, last: Date.now(), mode, answers, day: G.S.day.key });
     if (ok) {
       score++; streak++; $sc.textContent = score;
@@ -356,7 +382,7 @@ async function startChallenge(mode) {
       s.appendChild(el('<div class="a mark"></div>'));
       $peek.style.transform = `translateY(${px(-24)})`;
       setTimeout(() => { $peek.style.transform = ''; }, 200);
-      $cheer.firstChild.textContent = streak >= 5 ? 'すごい すごい！' : streak >= 3 ? 'いいね！' : 'やったね！';
+      $cheer.firstChild.textContent = grad ? 'にがて そつぎょう！' : streak >= 5 ? 'すごい すごい！' : streak >= 3 ? 'いいね！' : 'やったね！';
       setTimeout(() => { s.querySelector('.mark')?.remove(); if (!ended) ask(); }, 380);
     } else {
       streak = 0;
@@ -410,6 +436,7 @@ function showResult(res) {
         <div class="w felt st"><span class="small">にがてボーナス</span><b>+${res.bonus}</b></div>
       </div>
       ${miss}
+      ${res.graduated?.length ? `<div class="grad"><span class="small">にがて そつぎょう！</span>${res.graduated.slice(0, 5).map(g => `<span class="chip felt">${g.a}×${g.b}</span>`).join('')}</div>` : ''}
       <button class="btn main felt st puffy press" id="care">おせわ する</button>
     </div></div>`);
   s.appendChild(card);

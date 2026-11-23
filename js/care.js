@@ -42,6 +42,17 @@ export function startCare(showRoom) {
     [-60, 0, 60].forEach((dx, i) => setTimeout(() => floatAt(s, cx + dx, cy - Math.abs(dx) / 3, A.HEART, 54), i * 120));
   };
 
+  // 2026-11-23 すすみぐあいが見えないと言われたので、なでる・あたためる・おふろに メーターを出す
+  const meter = () => {
+    const m = el(`<div class="a cmeter felt st puffy"><div class="gauge"><i class="felt" style="width:0%"></i></div><span></span></div>`);
+    s.appendChild(m);
+    const bar = m.querySelector('i'), txt = m.querySelector('span');
+    return {
+      set(r, t) { r = Math.max(0, Math.min(1, r)); bar.style.width = (r * 100) + '%'; txt.textContent = t ?? (r >= 1 ? 'できた！' : r >= .6 ? 'あと すこし！' : 'ぽかぽか…'); },
+      remove() { m.remove(); },
+    };
+  };
+
   let doneCount = 0, cleanup = null, finished = false, busy = false;
   const endAt = Date.now() + G.CARE_SEC * 1000;
   const bar = top.querySelector('i'), tl = top.querySelector('.tl');
@@ -129,8 +140,9 @@ export function startCare(showRoom) {
   function bath(done) {
     hint.textContent = 'ゆびで こすって あわあわに しよう';
     say('おふろ だいすき！');
-    const NEED = 22; let n = 0, lastPt = null, down = false;
+    const NEED = 18; let n = 0, lastPt = null, down = false;
     const suds = [];
+    const mt = meter(); mt.set(0, `あわ 0/${NEED}`);
     const over = el(`<div class="a" style="left:${px(352)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
     s.appendChild(over);
     const add = (pt) => {
@@ -139,6 +151,7 @@ export function startCare(showRoom) {
       const size = 34 + Math.random() * 34;
       const b = el(`<div class="suds" style="left:${px(pt.x - size / 2)};top:${px(pt.y - size / 2)};width:${px(size)};height:${px(size)}"></div>`);
       s.appendChild(b); suds.push(b); n++;
+      mt.set(n / NEED, `あわ ${Math.min(n, NEED)}/${NEED}`);
       if (n === Math.floor(NEED / 2)) say('くすぐったーい！');
       if (n >= NEED) rinse();
     };
@@ -149,13 +162,13 @@ export function startCare(showRoom) {
       const sh = el('<div class="shower"></div>'); s.appendChild(sh);
       suds.forEach((b, i) => setTimeout(() => b.classList.add('rinse'), i * 25));
       await wait(1400);
-      sh.remove(); suds.forEach(b => b.remove()); over.remove();
+      sh.remove(); suds.forEach(b => b.remove()); over.remove(); mt.remove();
       done('ぴかぴかに なった！');
     }
     over.addEventListener('pointerdown', (e) => { down = true; cap(over, e); add(toStage(e)); });
     over.addEventListener('pointermove', (e) => { if (down && !rinsing) add(toStage(e)); });
     ['pointerup', 'pointercancel'].forEach(ev => over.addEventListener(ev, () => { down = false; }));
-    return () => { over.remove(); suds.forEach(b => b.remove()); s.querySelector('.shower')?.remove(); };
+    return () => { over.remove(); mt.remove(); suds.forEach(b => b.remove()); s.querySelector('.shower')?.remove(); };
   }
 
   // ---- あそぶ：ボールを はじく → とりに行く ----
@@ -230,18 +243,19 @@ export function startCare(showRoom) {
   function pat(done) {
     hint.textContent = 'たまごを ゆびで なでなで しよう';
     say('…ことこと');
-    let dist = 0, last = null, down = false, cnt = 0;
+    const NEED = 8; let dist = 0, last = null, down = false, cnt = 0;
+    const mt = meter(); mt.set(0, `なでなで 0/${NEED}`);
     const over = el(`<div class="a" style="left:${px(352)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
     s.appendChild(over);
     over.addEventListener('pointerdown', (e) => { down = true; last = toStage(e); cap(over, e); });
     over.addEventListener('pointermove', (e) => {
       if (!down) return; const pt = toStage(e);
       dist += Math.hypot(pt.x - last.x, pt.y - last.y); last = pt;
-      if (dist > 60) { dist = 0; cnt++; floatAt(s, pt.x, pt.y - 20, A.HEART, 40); }
-      if (cnt >= 12) { over.remove(); down = false; done('…うれしい！（ことっ）'); }
+      if (dist > 50) { dist = 0; cnt++; floatAt(s, pt.x, pt.y - 20, A.HEART, 40); mt.set(cnt / NEED, `なでなで ${Math.min(cnt, NEED)}/${NEED}`); }
+      if (cnt >= NEED) { over.remove(); down = false; setTimeout(() => mt.remove(), 500); done('…うれしい！（ことっ）'); }
     });
     ['pointerup', 'pointercancel'].forEach(ev => over.addEventListener(ev, () => { down = false; }));
-    return () => over.remove();
+    return () => { over.remove(); mt.remove(); };
   }
 
   // ---- あたためる（たまご）：ながおし ----
@@ -252,16 +266,18 @@ export function startCare(showRoom) {
     const over = el(`<div class="a" style="left:${px(352)};top:${px(197)};width:${px(400)};height:${px(480)};z-index:7;touch-action:none"></div>`);
     s.appendChild(over);
     let k = 0, holding = false, raf = 0, last = 0;
+    const mt = meter(); mt.set(0, 'おさえてね');
     const tick = (t) => {
       const dt = last ? (t - last) / 1000 : 0; last = t;
-      k = Math.max(0, Math.min(1, k + (holding ? dt / 2.5 : -dt / 2)));
+      k = Math.max(0, Math.min(1, k + (holding ? dt / 1.8 : -dt / 6)));
+      mt.set(k, k <= 0 && !holding ? 'おさえてね' : undefined);
       glow.style.transform = `scale(${0.4 + k * 1.6})`; glow.style.opacity = String(k);
-      if (k >= 1) { over.remove(); holding = false; setTimeout(() => { glow.style.transform = 'scale(0)'; }, 900); done('ぽかぽか… あったかい！'); return; }
+      if (k >= 1) { over.remove(); holding = false; setTimeout(() => mt.remove(), 500); setTimeout(() => { glow.style.transform = 'scale(0)'; }, 900); done('ぽかぽか… あったかい！'); return; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     over.addEventListener('pointerdown', (e) => { holding = true; cap(over, e); });
     ['pointerup', 'pointercancel'].forEach(ev => over.addEventListener(ev, () => { holding = false; }));
-    return () => { cancelAnimationFrame(raf); over.remove(); glow.style.transform = 'scale(0)'; };
+    return () => { cancelAnimationFrame(raf); over.remove(); mt.remove(); glow.style.transform = 'scale(0)'; };
   }
 }

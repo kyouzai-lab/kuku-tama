@@ -140,10 +140,12 @@ function decideType(t) {
 
 // ---------- 九九 ----------
 const fk = (a, b) => `${a}x${b}`;
-export function isWeak(a, b) {
-  const f = S.facts[fk(a, b)];
-  return !!f && f.w > 0 && (f.last === 0 || f.streak < 2);
-}
+// にがて＝まちがえたことがあって、まだ「2かい つづけて せいかい」していない もんだい
+export const GRADUATE = 2;
+const weakOf = (f) => !!f && f.w > 0 && (f.last === 0 || f.streak < GRADUATE);
+// そつぎょうまで あと何回 つづけて せいかいすればいいか
+const leftOf = (f) => (f.last === 0 ? GRADUATE : Math.max(1, GRADUATE - f.streak));
+export function isWeak(a, b) { return weakOf(S.facts[fk(a, b)]); }
 export function weakList() {
   const out = [];
   for (let a = 1; a <= 9; a++) for (let b = 1; b <= 9; b++) if (isWeak(a, b)) out.push([a, b]);
@@ -151,25 +153,50 @@ export function weakList() {
 }
 
 // mode: 'omakase' か 段の配列
+// 2026-11-23 にがてが同じ回に何度も出すぎたので直した：
+//  ・おまかせで「にがて」から出すのは、1つの もんだいにつき 1回に2どまで
+//  ・その回で せいかいしたら、その回は もう にがてとしては出さない
+//  ・さいきん出た3もんは なるべく出さない
+// next() で もんだいを出し、next.mark(a, b, ok) で こたえを知らせる
 export function makePicker(mode) {
   const all = [];
   const dans = mode === 'omakase' ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : mode;
   dans.forEach(a => { for (let b = 1; b <= 9; b++) all.push([a, b]); });
-  let prev = null;
-  return function next() {
-    let pool = all;
-    if (mode === 'omakase') {
-      const weak = weakList();
-      if (weak.length && Math.random() < 0.5) pool = weak;
+  const weakStart = mode === 'omakase' ? weakList() : [];
+  const shown = {}, okThisRound = new Set(), recent = [];
+  // この回の こたえを反映した きろく（S.facts は回のおわりに まとめて書く）
+  const live = {};
+  const factNow = (k) => live[k] || S.facts[k];
+  // おまかせでは、にがては「にがての わく」からだけ出す（ふつうの もんだいに まぜると 3回以上 出てしまう）
+  const weakKeys = new Set(weakStart.map(([a, b]) => fk(a, b)));
+  const normal = weakKeys.size ? all.filter(([a, b]) => !weakKeys.has(fk(a, b))) : all;
+  function next() {
+    let pool = normal.length ? normal : all;
+    if (weakStart.length) {
+      const w = weakStart.filter(([a, b]) => { const k = fk(a, b); return !okThisRound.has(k) && (shown[k] || 0) < 2; });
+      if (w.length && Math.random() < 0.5) pool = w;
     }
     let q;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
       q = pool[Math.floor(Math.random() * pool.length)];
-      if (!prev || q[0] !== prev[0] || q[1] !== prev[1] || pool.length === 1) break;
+      const k = fk(q[0], q[1]);
+      const avoid = Math.min(3, pool.length - 1);
+      if (!recent.slice(-avoid).includes(k)) break;
     }
-    prev = q;
-    return { a: q[0], b: q[1], weak: isWeak(q[0], q[1]) };
+    const k = fk(q[0], q[1]);
+    shown[k] = (shown[k] || 0) + 1;
+    recent.push(k); if (recent.length > 3) recent.shift();
+    const f = factNow(k), weak = weakOf(f);
+    return { a: q[0], b: q[1], weak, left: weak ? leftOf(f) : 0 };
+  }
+  next.mark = (a, b, ok) => {
+    const k = fk(a, b), f = factNow(k);
+    const n = f ? { ...f } : { s: 0, w: 0, last: 1, streak: 0 };
+    if (ok) { n.last = 1; n.streak++; okThisRound.add(k); } else { n.w++; n.last = 0; n.streak = 0; }
+    live[k] = n;
+    return { graduated: weakOf(f) && !weakOf(n) };
   };
+  return next;
 }
 
 // とちゅう経過の保存（とちゅうで閉じたとき用）
@@ -182,6 +209,7 @@ export function finishPlay(mode, answers) {
   const p = S.pet;
   let exp = 0, correct = 0, bonus = 0;
   const wrong = [];
+  const weakBefore = new Set(weakList().map(([a, b]) => fk(a, b)));
   answers.forEach(x => {
     const k = fk(x.a, x.b);
     const f = S.facts[k] || (S.facts[k] = { s: 0, w: 0, last: 1, streak: 0 });
@@ -209,7 +237,9 @@ export function finishPlay(mode, answers) {
   if (S.history.length > 300) S.history.splice(0, S.history.length - 300);
   S.inProgress = null;
   save();
-  return { correct, total: answers.length, exp, food, bonus, wrong: wrong.slice(0, 5) };
+  // この回で にがてを そつぎょうした もんだい
+  const graduated = [...weakBefore].filter(k => !weakOf(S.facts[k])).map(k => { const [a, b] = k.split('x').map(Number); return { a, b }; });
+  return { correct, total: answers.length, exp, food, bonus, wrong: wrong.slice(0, 5), graduated };
 }
 
 // 前回とちゅうで閉じたチャレンジの後しまつ
