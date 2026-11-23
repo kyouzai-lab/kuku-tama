@@ -5,7 +5,7 @@ const OFFSET_KEY = 'kukutama-debug-offset';
 export const PLAYS_PER_DAY = 3;
 // ?fast をつけると ためし用に みじかくなる（チャレンジ8秒）
 const FAST = new URLSearchParams(location.search).has('fast');
-export const CHALLENGE_SEC = FAST ? 8 : 60;
+export const CHALLENGE_SEC = FAST ? 8 : 45;   // 2026-11-23 60→45秒に変更
 export const CARE_SEC = 60;
 export const CARE_MAX_ACTIONS = 2;
 // 次の姿に進む条件（チャレンジした日数・けいけんち）。数字は試してから調整する
@@ -169,12 +169,12 @@ export function finishPlay(mode, answers) {
 }
 
 // 前回とちゅうで閉じたチャレンジの後しまつ
-// 30秒以上やっていたら1回と数える。それより短ければ数えない
+// 半分（45秒なら23秒）以上やっていたら1回と数える。それより短ければ数えない
 export function recoverProgress() {
   const ip = S.inProgress;
   if (!ip) return null;
   const elapsed = (ip.last - ip.start) / 1000;
-  if (elapsed >= 30 && ip.day === S.day.key) return finishPlay(ip.mode, ip.answers);
+  if (elapsed >= CHALLENGE_SEC / 2 && ip.day === S.day.key) return finishPlay(ip.mode, ip.answers);
   S.inProgress = null; save();
   return null;
 }
